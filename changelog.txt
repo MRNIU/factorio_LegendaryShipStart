@@ -1,0 +1,8 @@
+---------------------------------------------------------------------------------------------------
+Version: 1.0.0
+Date: 2025-12-30
+  Changes:
+    - Updated starting items list.
+    - Added bilingual descriptions in README.
+    - 更新了初始物品列表。
+    - 在 README 中添加了双语说明。

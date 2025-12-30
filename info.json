@@ -1,0 +1,14 @@
+{
+    "name": "LegendaryShipStart",
+    "version": "1.0.0",
+    "title": "LegendaryShipStart",
+    "author": "zhihong",
+    "contact": "zhihong@nzhnb.com",
+    "homepage": "https://github.com/MRNIU/factorio_LegendaryShipStart",
+    "description": "Provides a legendary ship starting setup for Factorio players.",
+    "factorio_version": "2.0",
+    "dependencies": [
+        "base >= 2.0.55",
+        "space-age"
+    ]
+}
