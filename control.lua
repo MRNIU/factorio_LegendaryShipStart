@@ -1,7 +1,4 @@
--- This file is a part of MRNIU/factorio_LegendaryShipStart
--- (https://github.com/MRNIU/factorio_LegendaryShipStart).
---
--- control.lua for MRNIU/factorio_LegendaryShipStart.
+-- Copyright The MRNIU/factorio_LegendaryShipStart Contributors
 
 local ships_blueprint = require("ships_blueprint")
 
@@ -25,7 +22,7 @@ local function ApplyBlueprint(surface, blueprint_string)
             -- 0. 预先生成区块，防止蓝图过大超出范围
             local blueprint_entities = stack.get_blueprint_entities()
             local blueprint_tiles = stack.get_blueprint_tiles()
-            
+
             local min_x, min_y, max_x, max_y = 0, 0, 0, 0
             local initialized = false
 
@@ -62,7 +59,7 @@ local function ApplyBlueprint(surface, blueprint_string)
 
                 for x = chunk_min_x, chunk_max_x do
                     for y = chunk_min_y, chunk_max_y do
-                        surface.request_to_generate_chunks({x * 32, y * 32}, 0)
+                        surface.request_to_generate_chunks({ x * 32, y * 32 }, 0)
                     end
                 end
                 surface.force_generate_chunk_requests()
@@ -102,7 +99,14 @@ local function ApplyBlueprint(surface, blueprint_string)
             -- 3. 立即复活所有虚影为实体
             if ghosts then
                 for _, ghost in pairs(ghosts) do
-                    ghost.revive({ raise_revive = true })
+                    local revived, revived_entity, item_request_proxy = ghost.revive({ raise_revive = true })
+                    if revived and revived_entity and item_request_proxy and item_request_proxy.valid then
+                        -- 如果有物品请求代理（通常是插件），则插入物品并销毁代理
+                        for _, item_req in pairs(item_request_proxy.item_requests) do
+                            revived_entity.insert(item_req)
+                        end
+                        item_request_proxy.destroy()
+                    end
                 end
             end
 

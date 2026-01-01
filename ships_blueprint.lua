@@ -1,7 +1,4 @@
--- This file is a part of MRNIU/factorio_LegendaryShipStart
--- (https://github.com/MRNIU/factorio_LegendaryShipStart).
---
--- ships_blueprint.lua for MRNIU/factorio_LegendaryShipStart.
+-- Copyright The MRNIU/factorio_LegendaryShipStart Contributors
 
 local ships_blueprint = {}
 
