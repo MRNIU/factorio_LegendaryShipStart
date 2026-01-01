@@ -1,6 +1,6 @@
 {
     "name": "LegendaryShipStart",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "title": "LegendaryShipStart",
     "author": "zhihong",
     "contact": "zhihong@nzhnb.com",
@@ -10,7 +10,6 @@
     "dependencies": [
         "base >= 2.0.55",
         "space-age",
-        "quality",
-        "elevated-rails"
+        "quality"
     ]
 }
