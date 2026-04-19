@@ -15,7 +15,7 @@ Blueprints bundled with this mod come from the Factorio community. All credit be
 
 ## Compatibility
 
-- Factorio 2.0.55 or newer.
+- Factorio 2.0.76 or newer.
 - Requires `base`, `space-age`, `quality`.
 
 ## License
