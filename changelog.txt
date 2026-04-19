@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.0
+Date: 2026-04-19
+  Changes:
+    - Added biter_egg starter ship to the fleet.
+    - Removed dead storage.pending_platforms branch; missing surface now logs and skips.
+    - Rewrote README in English only.
+    - Added CLAUDE.md with blueprint-apply pipeline notes and Factorio API references.
+
+---------------------------------------------------------------------------------------------------
 Version: 1.1.1
 Date: 2026-01-01
   Changes:

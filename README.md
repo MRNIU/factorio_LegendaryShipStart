@@ -1,32 +1,32 @@
-﻿# Legendary Ship Start
+# Legendary Ship Start
 
-Provides a legendary ship starting setup for Factorio players. This mod allows you to start your game with a pre-built legendary ship layout.
-为异星工厂玩家提供传奇飞船开局设置。此模组允许您以预建的传奇飞船布局开始游戏。
+A Factorio 2.0 mod that pre-builds a fleet of legendary space platforms around Nauvis when a new game starts.
 
-## Features / 功能特性
+## Features
 
-- **Legendary Ship Start**: Automatically places a legendary ship blueprint at the start of the game.
-- **传奇飞船开局**: 游戏开始时自动放置传奇飞船蓝图。
+- **Instant fleet**: on the first game load the mod creates multiple pre-configured space platforms over Nauvis — a starter ship, several late-game freighters, a white-science platform, calcite transports, a shop ship, and a biter-egg platform.
+- **Idempotent**: if a platform with the same name already exists on the player force the mod skips it, so reloading or migrating saves is safe.
+- **Forced placement**: blueprints are applied with `build_mode.forced`, so tile-connectivity checks and other build-time restrictions don't break platforms that legitimately span gaps.
+- **Item requests honoured**: modules, filters, fuel, and other embedded requests encoded in the blueprints are delivered directly into the revived entities.
 
-## Disclaimer / 声明
+## Disclaimer
 
-The blueprints used in this mod are sourced from the internet. All credit goes to the original creators of these blueprints.
-本模组中使用的蓝图来源于互联网。所有荣誉归于这些蓝图的原始创作者。
+Blueprints bundled with this mod come from the Factorio community. All credit belongs to the original blueprint authors.
 
-## Compatibility / 兼容性
+## Compatibility
 
-- **Factorio Version**: 2.0.55+
-- **Dependencies**: base >= 2.0.55, space-age
+- Factorio 2.0.55 or newer.
+- Requires `base`, `space-age`, `quality`.
 
-## License / 许可证
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+MIT — see [LICENSE](LICENSE).
 
-## Author / 作者
+## Author
 
-- **NZH** - zhihong@nzhnb.com
-- **Project Repository**: https://github.com/MRNIU/factorio_LegendaryShipStart
+- **NZH** — zhihong@nzhnb.com
+- Repository: <https://github.com/MRNIU/factorio_LegendaryShipStart>
 
-## Changelog / 更新日志
+## Changelog
 
-See [changelog.txt](changelog.txt) for version history.
+See [changelog.txt](changelog.txt).

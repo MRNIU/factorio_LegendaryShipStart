@@ -155,10 +155,7 @@ local function CreateSingleShip(ship)
 
     local platform_surface = platform.surface
     if not platform_surface then
-        -- Surface not ready yet, store index to handle in on_surface_created
-        if not storage.pending_platforms then storage.pending_platforms = {} end
-        storage.pending_platforms[platform.index] = bp_string
-        game.print("LegendaryShipStart: Platform " .. name .. " created, waiting for surface...")
+        game.print("LegendaryShipStart: Platform " .. name .. " has no surface; skipping blueprint.")
         return
     end
 
