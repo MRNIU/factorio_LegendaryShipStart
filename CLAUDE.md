@@ -29,28 +29,40 @@ Factorio 2.0 Mod（`LegendaryShipStart`），用 Lua 编写。仓库本身即是
 
 ## 架构
 
-两个 Lua 文件，都是运行时代码：
+三个 Lua 文件，都是运行时代码：
 
-- **`control.lua`** — 事件注册 + 蓝图应用逻辑。`script.on_init(CreateLegendaryShips)` 在新游戏时跑一次，遍历 `ships_blueprint`，对每条都调一次 `CreateSingleShip(ship)`。每条流程：
-  1. 如果 player force 已经有同名平台就跳过（幂等）。
-  2. `force.create_space_platform{ planet = "nauvis", starter_pack = "space-platform-starter-pack" }` 拿到一个 `LuaSpacePlatform`。
-  3. `platform.apply_starter_pack()` 生成默认枢纽实体。
-  4. 把平台的 `surface` 扔给 `ApplyBlueprint`。
+- **`control.lua`** — 事件注册 + 平台创建。`script.on_init(create_all_ships)` 在新游戏时跑一次，遍历 `ships_blueprint`，对每条都调一次 `create_single_ship(ship)`。每条流程：
+  1. 平台 name 拼 `NAME_PREFIX` (`"LSS "`) + `ship.name`——所有生成的平台都带这个前缀，方便和其他 Mod / 玩家命名的飞船区分。
+  2. 如果 player force 已经有同名平台就跳过（幂等）。
+  3. `force.create_space_platform{ planet = "nauvis", starter_pack = "space-platform-starter-pack" }` 拿到一个 `LuaSpacePlatform`。
+  4. `platform.apply_starter_pack()` 生成默认枢纽实体（马上会被 `apply_blueprint` 清掉，但平台初始化流程需要它）。
+  5. 把平台的 `surface` 扔给 `apply_blueprint.apply(surface, ship.data, name)`。
+  6. 返回 `(ok, err)`；caller 累计成功 / 失败数，末尾只打一条总结 `game.print`，不刷屏。
+  7. `script.on_configuration_changed` 挂了个 `migrate_platform_names`——1.2.3 加了 `"LSS "` 前缀，老存档里没前缀的平台会被重命名为新 name（`LuaSpacePlatform.name` 可写）。
 
-- **`ships_blueprint.lua`** — 纯数据。导出 `ships_blueprint`，一个 `{ name, data }` 列表，`data` 是序列化的 Factorio 蓝图字符串（base64+zlib 编码、以 `0e` 开头）。多条可以复用同一个蓝图变量（比如 `startship1/2/3` 都指向 `startship`），这样批量生成多艘相同的船。
+- **`apply_blueprint.lua`** — 蓝图应用流水线。对外只暴露 `M.apply(surface, blueprint_string, label) -> ok, err`。`label` 仅用于日志。**破坏性**：会清掉 `surface` 上所有实体，只给太空平台开局这个场景用。
 
-### 蓝图应用流水线（`ApplyBlueprint`）
+- **`ships_blueprint.lua`** — 纯数据。导出 `ships_blueprint`，一个 `{ name, data }` 列表，`data` 是序列化的 Factorio 蓝图字符串（base64+zlib 编码、以 `0e` 开头）。`data` 也可以是 blueprint book（流水线会展开所有页）。多条可以复用同一个蓝图变量（比如 `startship1/2/3` 都指向 `startship`），这样批量生成多艘相同的船。注意：`name` 在数据里是裸名（`"startship1"`），实际平台 name 是 `"LSS startship1"`，前缀在 `control.lua` 运行时拼。
 
-蓝图字符串不能直接贴到平台 surface 上——必须经过一个 `BlueprintItem` stack 中转。流程：
+### 蓝图应用流水线（`apply_blueprint.apply`）
+
+蓝图字符串不能直接贴到平台 surface 上——必须经过一个 `BlueprintItem` stack 中转。整段用 `pcall` 包住，保证中途抛错也能 `inventory.destroy()` 不泄漏临时库存。流程：
 
 1. 用 `game.create_inventory(1)` 建一个临时库存。
-2. `stack.import_stack(blueprint_string)`——成功返回 0，带错误返回 -1，失败返回 1。真正有效的蓝图同时满足 `stack.valid_for_read and stack.is_blueprint`，以这个判断为准，别只看数字返回值。
-3. 读出 `get_blueprint_entities()` 和 `get_blueprint_tiles()`，算出 AABB 包围盒，然后对每个覆盖到的 32×32 chunk 调 `request_to_generate_chunks` + `force_generate_chunk_requests`。必须预生成，否则 `find_entities` / `set_tiles` 在未生成区块上会静默 no-op。
-4. `surface.find_entities()` → 全部 destroy（清掉 starter pack 的枢纽和其他种子实体，避免和蓝图冲突）。
-5. `surface.set_tiles(...)` 先铺蓝图里的 tile。太空平台 tile 在正式 build 时会做连通性检查，用原始 `set_tiles` 先铺可以绕过，给蓝图的实体留个落脚的地板。
-6. `stack.build_blueprint{ build_mode = defines.build_mode.forced, skip_fog_of_war = false }` → 返回 ghost 列表。
-7. 对每个 ghost 调 `ghost.revive({ raise_revive = true })`。如果 revive 顺带返回了 `item_request_proxy`，把它的 `item_requests` 灌进刚复活的实体——蓝图里序列化的模块 / 过滤器 / 燃料就是这样落到实体里的。
-8. 销毁临时库存。
+2. `stack.import_stack(blueprint_string)`——成功返回 0，带错误返回 -1，失败返回 1。返回值只打日志，不拿来决定成败；以 `stack.valid_for_read` 为准。
+3. `collect_pages(stack)`：如果 `stack.is_blueprint` 就直接是一页；如果 `stack.is_blueprint_book` 就用 `stack.get_inventory(defines.inventory.item_main)` 展开里面每一张合法蓝图。都不是就报错。
+4. 跨所有页算 AABB，对每个覆盖到的 32×32 chunk 调 `request_to_generate_chunks` + `force_generate_chunk_requests`。必须预生成，否则 `find_entities` / `set_tiles` 在未生成区块上会静默 no-op。
+5. `surface.find_entities()` → 全部 destroy（清掉 starter pack 的枢纽和其他种子实体，避免和蓝图冲突）。**只清一次**——多页蓝图共用这个空 surface，第 2 页不会把第 1 页的实体抹掉。
+6. 对每一页按顺序：
+   1. `surface.set_tiles(page.get_blueprint_tiles())`——`BlueprintTile` 的 `{name, position}` 结构和 `Tile` 一致，直接传，不需要重建 table。太空平台 tile 在正式 build 时会做连通性检查，用原始 `set_tiles` 先铺可以绕过。
+   2. `page.build_blueprint{ build_mode = defines.build_mode.forced, skip_fog_of_war = false }` → 返回 ghost 列表。
+   3. 对每个 ghost 调 `ghost.revive{ raise_revive = false, return_item_request_proxy = true }`。第三个返回值 `item_request_proxy` **必须显式传 `return_item_request_proxy = true` 才会有**，否则是 nil，蓝图里的模块 / 弹药 / 燃料 / 过滤器全都落不进实体。`raise_revive = false` 省掉 `script_raised_revive` 广播——`on_init` 里别的 Mod 可能还没初始化完自己的状态。
+   4. `fulfill_item_requests(entity, proxy)` 兑现物品请求。**关键坑**：`proxy.item_requests` 和 `proxy.insert_plan` 是两个**格式不同**的字段：
+      - `item_requests`：扁平 `array[ItemWithQualityCount] = { name, quality, count }`，**没有 slot 信息**。
+      - `insert_plan`：per-slot `array[BlueprintInsertPlan] = { id = {name, quality}, items = { in_inventory = array[InventoryPosition] } }`，精确到"哪个 inventory 的哪个 slot"。
+
+      **必须读 `insert_plan`**，按 `slot.inventory` 调 `entity.get_inventory(slot.inventory):insert{...}`。否则对多 inventory 实体（装配机、回收机、熔炉）模块会进默认 inventory（input 队列）被当成原料消耗掉。
+7. 销毁临时库存。
 
 ### 状态模型（Factorio 2.0）
 
@@ -60,7 +72,9 @@ Factorio 2.0 Mod（`LegendaryShipStart`），用 Lua 编写。仓库本身即是
 
 - **清实体会把 starter pack 枢纽也抹掉。** 这是有意的——我们期望蓝图里自带枢纽。如果某个蓝图没枢纽，那艘船就是空的。
 - **`build_mode.forced`** 绕过了 build 检查（包括太空平台 tile 连通性）。不懂它的含义就别去动。
-- **按 player force 去重。** `CreateSingleShip` 如果在 `force.platforms` 里看到同名平台就跳过，所以 `on_init` 被重跑时（比如 `/c game.reset_game_state`）按名字来说是幂等的。
+- **按 force.platforms 去重。** `create_single_ship` 如果在 `force.platforms` 里看到同名平台就返回 `"already exists"`，caller 静默跳过，所以 `on_init` 被重跑时（比如 `/c game.reset_game_state`）按名字来说是幂等的。
+- **平台 name 前缀迁移。** 1.2.3 起加了 `"LSS "` 前缀。`migrate_platform_names` 只在 `on_configuration_changed` 里跑一次——有老名字 + 没新名字才改；有冲突则保留两者，记日志。`LuaSpacePlatform.name` 可写但赋值用了 `pcall` 兜底，防 API 行为变更。
+- **Blueprint book 的多页会叠在同一 surface 上。** 不同页的实体和 tile 会被 forced-build 往同一坐标系上堆——玩家自己塞的 book 多半不是为这场景设计的，预期是单页蓝图。
 
 ## 本地化
 
@@ -86,5 +100,6 @@ Factorio 2.0 Mod（`LegendaryShipStart`），用 Lua 编写。仓库本身即是
 - `LuaForce::create_space_platform`、`LuaSpacePlatform::apply_starter_pack`、`LuaSpacePlatform::surface`
 - `LuaItemStack::import_stack`、`get_blueprint_entities`、`get_blueprint_tiles`、`build_blueprint`
 - `LuaSurface::request_to_generate_chunks`、`force_generate_chunk_requests`、`set_tiles`、`find_entities`
-- `LuaEntity::revive{ raise_revive = true }` 以及返回的 `item_request_proxy`
+- `LuaEntity::revive{ raise_revive = false, return_item_request_proxy = true }` 以及第三返回值 `item_request_proxy`，用 `proxy.insert_plan`（不是 `proxy.item_requests`）兑现到 `entity.get_inventory(slot.inventory)`
 - `defines.build_mode`、`defines.events.on_init`、`defines.events.on_surface_created`
+- `defines.inventory.item_main`（blueprint book 展开）、`script.on_configuration_changed`（平台 name 迁移）

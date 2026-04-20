@@ -1,4 +1,25 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.3
+Date: 2026-04-20
+  Changes:
+    - Prefixed all generated platform names with "LSS " to avoid collisions with other mods' or players' ships; existing saves are migrated automatically via on_configuration_changed.
+    - Extracted the blueprint application pipeline into apply_blueprint.lua; control.lua is now just platform creation + event wiring.
+    - Added blueprint-book support: if a blueprint book is passed, every page in the book is applied to the same platform surface.
+    - Dropped the redundant tile-table rebuild before set_tiles; BlueprintTile entries are passed straight through.
+    - Switched array traversals from pairs to ipairs where the source is a documented array.
+  Features:
+    - Per-ship failures now print a distinct message with the ship name and cause; successes collapse into a single summary line.
+
+---------------------------------------------------------------------------------------------------
+Version: 1.2.2
+Date: 2026-04-20
+  Bugfixes:
+    - Fixed blueprint item requests (modules, ammo, fuel, filters) not landing in the correct inventory on multi-inventory entities (assemblers, recyclers, furnaces); previously they were inserted via the flat `item_requests` field and ended up in the default input queue where they could be consumed as ingredients.
+    - Pass `return_item_request_proxy = true` to `LuaEntity::revive` so the item_request_proxy is actually returned; without it the third return value was nil and all per-slot item requests were silently dropped.
+    - Wrapped the blueprint-apply pipeline in `pcall` so the temporary inventory is always destroyed even if `import_stack` or `build_blueprint` throws.
+    - Switched `revive` to `raise_revive = false` to avoid broadcasting `script_raised_revive` during `on_init` before other mods have initialized.
+
+---------------------------------------------------------------------------------------------------
 Version: 1.2.1
 Date: 2026-04-19
   Changes:
