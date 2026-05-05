@@ -32,7 +32,7 @@ Date: 2026-04-19
     - Added biter_egg starter ship to the fleet.
     - Removed dead storage.pending_platforms branch; missing surface now logs and skips.
     - Rewrote README in English only.
-    - Added CLAUDE.md with blueprint-apply pipeline notes and Factorio API references.
+    - Added AGENTS.md with blueprint-apply pipeline notes and Factorio API references.
 
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.1
