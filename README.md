@@ -1,6 +1,6 @@
 # Legendary Ship Start
 
-A Factorio 2.0 mod that pre-builds a fleet of legendary space platforms around Nauvis when a new game starts.
+A Factorio 2.1 mod that pre-builds a fleet of legendary space platforms around Nauvis when a new game starts.
 
 ## Features
 
@@ -15,7 +15,7 @@ Blueprints bundled with this mod come from the Factorio community. All credit be
 
 ## Compatibility
 
-- Factorio 2.0.76 or newer.
+- Factorio 2.1.9 or newer.
 - Requires `base`, `space-age`, `quality`.
 
 ## License

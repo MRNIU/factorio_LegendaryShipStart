@@ -4,9 +4,9 @@
 
 ## 项目定位
 
-Factorio 2.0 Mod（`LegendaryShipStart`），用 Lua 编写。仓库本身即是部署的 Mod——以 `%APPDATA%/Factorio/mods/LegendaryShipStart/` 的形式被游戏直接加载。没有构建步骤、没有包管理器、没有测试。改代码后重启 Factorio（或重载存档）即生效。
+Factorio 2.1 Mod（`LegendaryShipStart`），用 Lua 编写。仓库本身即是部署的 Mod——以 `%APPDATA%/Factorio/mods/LegendaryShipStart/` 的形式被游戏直接加载。没有构建步骤、没有包管理器、没有测试。改代码后重启 Factorio（或重载存档）即生效。
 
-`info.json` 声明的依赖：`base >= 2.0.76`、`space-age`、`quality`。本 Mod 仅运行时（没有 `data.lua`），依赖 Space Age 的太空平台 API。
+`info.json` 声明的依赖：`base >= 2.1.9`、`space-age`、`quality`。本 Mod 仅运行时（没有 `data.lua`），依赖 Space Age 的太空平台 API。
 
 ## 兄弟 Mod
 
@@ -21,9 +21,9 @@ Factorio 2.0 Mod（`LegendaryShipStart`），用 Lua 编写。仓库本身即是
 
 ## 常用命令
 
-- **运行 / 迭代**：启动 Factorio，启用本 Mod，开新游戏。（注：Claude Code 跑在 WSL、Mod 文件通过 Windows 挂载访问，Claude 无法直接启动 Factorio 或 FactorioModDebug；运行验证需要你在 Windows 侧手工操作。）
+- **运行 / 迭代**：启动 Factorio，启用本 Mod，开新游戏。（注：Claude Code 跑在 WSL、Mod 文件通过 Windows 挂载访问，Claude 无法直接启动 Factorio 或 Factorio Modding Tool Kit；运行验证需要你在 Windows 侧手工操作。）
 - **语法检查 / 预提交**：改完任何 `.lua` 后跑一次 `for f in *.lua; do luac5.4 -p "$f" || break; done`（全 Mod 扫一遍 < 100ms），能抓 `end` 缺失 / 括号不匹配 / 字符串没闭合等语法问题；**不查语义**（undefined global、类型错误等）。提交前养成这个习惯可以避免把纯语法错推到 Mod portal。
-- **调试**：`.vscode/launch.json` 里配好了 [FactorioModDebug](https://marketplace.visualstudio.com/items?itemName=justarandomgeek.factoriomod-debug) 的启动项，追控制流时优先用它，别靠 `game.print`。
+- **调试**：`.vscode/launch.json` 使用 Factorio Modding Tool Kit 2.1+ 的原生 `factorio` 调试适配器（Factorio 2.1 的 `--dap`），追控制流时优先用它，别靠 `game.print`。
 - **打包发布**：打包为 `LegendaryShipStart_<version>.zip`，压缩包最外层是文件夹本身。版本号必须和 `info.json`、`changelog.txt` 顶条一致。
 - **Changelog 格式**：Factorio 严格格式（99 个 `-`、`Version:`、`Date:`、缩进 `Changes:`），英文。
 
@@ -64,7 +64,7 @@ Factorio 2.0 Mod（`LegendaryShipStart`），用 Lua 编写。仓库本身即是
       **必须读 `insert_plan`**，按 `slot.inventory` 调 `entity.get_inventory(slot.inventory):insert{...}`。否则对多 inventory 实体（装配机、回收机、熔炉）模块会进默认 inventory（input 队列）被当成原料消耗掉。
 7. 销毁临时库存。
 
-### 状态模型（Factorio 2.0）
+### 状态模型（Factorio 2.1）
 
 本 Mod 目前不维护任何持久状态，`storage` 是空的。如果以后需要，记得在 `on_init` 里初始化，并在事件处理器里防御性判空。
 
